@@ -6,6 +6,7 @@ import (
 	"testing"
 	"time"
 
+	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )
 
@@ -50,19 +51,15 @@ func TestAddGetDelete(t *testing.T) {
 	// проверьте, что значения всех полей в полученном объекте совпадают со значениями полей в переменной parcel
 	p, err := store.Get(number)
 	require.NoError(t, err)
-
-	require.Equal(t, parcel.Client, p.Client)
-	require.Equal(t, parcel.Status, p.Status)
-	require.Equal(t, parcel.Address, p.Address)
-	require.Equal(t, parcel.CreatedAt, p.CreatedAt)
+	assert.Equal(t, parcel, p)
 
 	// delete
 	// удалите добавленную посылку, убедитесь в отсутствии ошибки
 	// проверьте, что посылку больше нельзя получить из БД
 	err = store.Delete(number)
 	require.NoError(t, err)
-	p, err = store.Get(number)
-	require.Error(t, err)
+	_, err = store.Get(number)
+	assert.Error(t, err)
 }
 
 // TestSetAddress проверяет обновление адреса
@@ -92,7 +89,7 @@ func TestSetAddress(t *testing.T) {
 	// получите добавленную посылку и убедитесь, что адрес обновился
 	p, err := store.Get(number)
 	require.NoError(t, err)
-	require.Equal(t, newAddress, p.Address)
+	assert.Equal(t, newAddress, p.Address)
 }
 
 // TestSetStatus проверяет обновление статуса
@@ -122,7 +119,7 @@ func TestSetStatus(t *testing.T) {
 	// получите добавленную посылку и убедитесь, что статус обновился
 	p, err := store.Get(number)
 	require.NoError(t, err)
-	require.Equal(t, newStatus, p.Status)
+	assert.Equal(t, newStatus, p.Status)
 }
 
 // TestGetByClient проверяет получение посылок по идентификатору клиента
@@ -165,21 +162,14 @@ func TestGetByClient(t *testing.T) {
 	// убедитесь в отсутствии ошибки
 	// убедитесь, что количество полученных посылок совпадает с количеством добавленных
 	require.NoError(t, err)
-	require.Equal(t, len(storedParcels), len(parcels))
+	assert.Len(t, storedParcels, len(parcels))
 
 	// check
 	for _, parcel := range storedParcels {
 		// в parcelMap лежат добавленные посылки, ключ - идентификатор посылки, значение - сама посылка
 		// убедитесь, что все посылки из storedParcels есть в parcelMap
 		// убедитесь, что значения полей полученных посылок заполнены верно
-		ok := true
-		if parcel, ok = parcelMap[parcel.Number]; ok {
-			require.Equal(t, parcel.Client, parcelMap[parcel.Number].Client)
-			require.Equal(t, parcel.Status, parcelMap[parcel.Number].Status)
-			require.Equal(t, parcel.Address, parcelMap[parcel.Number].Address)
-			require.Equal(t, parcel.CreatedAt, parcelMap[parcel.Number].CreatedAt)
-		} else {
-			require.True(t, ok)
-		}
+		assert.Contains(t, parcelMap, parcel.Number)
+		assert.Equal(t, parcel, parcelMap[parcel.Number])
 	}
 }
